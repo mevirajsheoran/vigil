@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+*.egg-info/
+dist/
+build/
+dashboard/node_modules/
+dashboard/dist/
+docs/load_test_results/*.html
