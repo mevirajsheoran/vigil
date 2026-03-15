@@ -1,0 +1,60 @@
+services:
+
+  # ─── PostgreSQL Database ───
+  # This is where all persistent data lives:
+  # request logs, attack sessions, fingerprints, analytics.
+  db:
+    image: postgres:16-alpine
+    # "image" = which pre-built container to download.
+    # postgres:16-alpine = PostgreSQL version 16, on Alpine Linux
+    # (Alpine = tiny Linux distro, makes the container smaller)
+
+    environment:
+      # These env vars configure PostgreSQL on first startup.
+      # It creates a user "Vigil" with password "Vigil"
+      # and a database called "Vigil".
+      POSTGRES_USER: Vigil
+      POSTGRES_PASSWORD: Vigil
+      POSTGRES_DB: Vigil
+
+    ports:
+      - "5432:5432"
+      # Maps container's port 5432 to YOUR machine's port 5432.
+      # Your Python code connects to localhost:5432,
+      # Docker forwards it to the container.
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Without this, ALL data disappears when the container stops.
+      # This line says "store database files in a Docker volume
+      # called postgres_data" which persists across restarts.
+
+    healthcheck:
+      # Docker checks if PostgreSQL is actually ready to accept
+      # connections, not just "is the container running?"
+      test: ["CMD-SHELL", "pg_isready -U Vigil"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis Cache ───
+  # In-memory data store. Blazing fast (sub-millisecond).
+  # Used for: threat scores, blocklists, velocity counters,
+  # event streams, pub/sub for live dashboard.
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6500:6379"
+      # Host port 6500 maps to container's internal port 6379.
+      # Redis INSIDE the container still runs on 6379.
+      # Your Python code connects to localhost:6500,
+      # Docker forwards it to the container's 6379.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# Named volume — persists PostgreSQL data across container restarts
+volumes:
+  postgres_data:
