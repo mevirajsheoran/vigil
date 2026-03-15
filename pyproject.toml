@@ -1,0 +1,19 @@
+[tool.pytest.ini_options]
+# "auto" means pytest-asyncio automatically handles async test functions.
+# Without this, you'd need to add a decorator to every single async test.
+asyncio_mode = "auto"
+
+# Where pytest looks for test files
+testpaths = ["tests"]
+
+[tool.ruff]
+# Which Python version's syntax to support
+target-version = "py312"
+
+# Max characters per line. 80 is the classic standard.
+line-length = 80
+
+[tool.mypy]
+python_version = "3.12"
+# Strict mode: catches the most possible type errors.
+strict = true

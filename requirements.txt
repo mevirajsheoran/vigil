@@ -1,0 +1,61 @@
+# ── API Framework ──
+# FastAPI: the web framework. Handles HTTP requests, routing, validation.
+# Think of it as Express.js for Python, but with automatic docs and type checking.
+fastapi==0.115.0
+
+# Uvicorn: the server that RUNS FastAPI. FastAPI defines routes,
+# Uvicorn listens on a port and forwards requests to FastAPI.
+# Like how Node.js runs Express — Uvicorn runs FastAPI.
+uvicorn[standard]==0.30.0
+
+# Pydantic: data validation. When someone sends JSON to your API,
+# Pydantic checks if the data matches the expected shape.
+# Wrong type? Missing field? Pydantic rejects it with a clear error.
+pydantic==2.9.0
+
+# Pydantic-settings: reads .env files and environment variables
+# into a typed Python class. Crashes on startup if DATABASE_URL is missing.
+pydantic-settings==2.5.0
+
+# ── Database ──
+# SQLAlchemy: ORM (Object-Relational Mapper). Write Python classes,
+# SQLAlchemy converts them to SQL tables. Write Python queries,
+# SQLAlchemy converts them to SQL queries. You rarely write raw SQL.
+sqlalchemy==2.0.35
+
+# Alembic: database migration tool. Tracks schema changes in files.
+# "Add a column" = one migration file. "Remove a table" = another.
+# Every change is versioned, reversible, and committed to Git.
+alembic==1.13.0
+
+# asyncpg: ASYNC PostgreSQL driver. FastAPI is async, so it needs
+# an async way to talk to PostgreSQL. This is the fastest one.
+asyncpg==0.30.0
+
+# psycopg2-binary: SYNC PostgreSQL driver. Alembic runs migrations
+# synchronously, so it needs a sync driver. Yes, you need both.
+psycopg2-binary==2.9.9
+
+# ── Redis ──
+# redis: Python Redis client. hiredis is a C extension that makes
+# it 2-3x faster at parsing Redis responses.
+redis[hiredis]==5.1.0
+
+# ── AI ──
+# Only used for attack analysis — explaining WHY something is an attack.
+# 99.9% of requests never touch this.
+google-generativeai==0.8.0
+
+# ── HTTP ──
+# httpx: async HTTP client. Like requests, but async.
+# Also used as a test client to send fake requests in tests.
+httpx==0.27.0
+
+# ── Logging ──
+# Outputs logs as JSON instead of plain text.
+# JSON logs are searchable by tools like Grafana and CloudWatch.
+python-json-logger==2.0.7
+
+# ── Utilities ──
+# Reads .env files into environment variables.
+python-dotenv==1.0.0

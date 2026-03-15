@@ -1,0 +1,28 @@
+# ── Testing ──
+# pytest: Python's standard test framework. Finds functions starting
+# with test_, runs them, reports pass/fail.
+pytest==8.3.0
+
+# pytest-asyncio: lets pytest run async test functions.
+# Without it, pytest can't handle "async def test_something()".
+pytest-asyncio==0.24.0
+
+# pytest-cov: measures code coverage — what % of your code is tested.
+pytest-cov==5.0.0
+
+# httpx: used as test client to send fake HTTP requests to FastAPI.
+httpx==0.27.0
+
+# ── Load Testing ──
+# Locust: simulates hundreds of users hitting your API simultaneously.
+# You define user behaviors in Python, Locust runs them in parallel.
+locust==2.31.0
+
+# ── Code Quality ──
+# ruff: linter + formatter. Catches bugs and style issues.
+# 10-100x faster than pylint because it's written in Rust.
+ruff==0.6.0
+
+# mypy: static type checker. Catches type errors before you run code.
+# "You're passing a string where an int is expected" — caught at check time.
+mypy==1.11.0
