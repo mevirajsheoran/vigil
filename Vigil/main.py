@@ -16,7 +16,7 @@ The lifespan context manager ensures cleanup happens
 even if the server crashes. Without it, connections
 would leak and eventually exhaust the database.
 """
-
+from Vigil.core.cold_start import cold_start
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends
@@ -42,6 +42,7 @@ async def lifespan(app: FastAPI):
     # ── STARTUP ──
     await init_db()       # Connect to PostgreSQL
     await init_redis()    # Connect to Redis
+    await cold_start.initialize()  
     await ensure_default_organization()
     logger.info("Vigil started — all connections ready")
 
