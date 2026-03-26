@@ -28,3 +28,5 @@ dashboard/dist/
 
 # Load test HTML reports — generated, not source code
 docs/load_test_results/*.html
+
+githistory.txt
