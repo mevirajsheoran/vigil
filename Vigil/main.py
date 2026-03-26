@@ -16,7 +16,13 @@ The lifespan context manager ensures cleanup happens
 even if the server crashes. Without it, connections
 would leak and eventually exhaust the database.
 """
-from Vigil.core.cold_start import cold_start
+"""
+Main FastAPI application — the entry point.
+
+ALL routes registered here. When you add a new endpoint
+file, import its router and include it below.
+"""
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends
@@ -25,30 +31,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from Vigil.config import logger
 from Vigil.db.engine import init_db, close_db
 from Vigil.cache.client import init_redis, close_redis
+from Vigil.core.cold_start import cold_start
 from Vigil.core.setup import ensure_default_organization
 from Vigil.api.middleware import rate_limit_vigil
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Startup and shutdown lifecycle.
-
-    Everything BEFORE yield runs on startup.
-    Everything AFTER yield runs on shutdown.
-    The yield itself is when the app is "live" and
-    accepting requests.
-    """
-    # ── STARTUP ──
-    await init_db()       # Connect to PostgreSQL
-    await init_redis()    # Connect to Redis
-    await cold_start.initialize()  
+    """Startup and shutdown lifecycle."""
+    await init_db()
+    await init_redis()
+    await cold_start.initialize()
     await ensure_default_organization()
     logger.info("Vigil started — all connections ready")
 
-    yield  # App is now running and handling requests
+    yield
 
-    # ── SHUTDOWN ──
     await close_db()
     await close_redis()
     logger.info("Vigil shut down cleanly")
@@ -59,34 +57,43 @@ app = FastAPI(
     description="API Abuse Detection Engine",
     version="1.0.0",
     lifespan=lifespan,
-    # This makes rate_limit_vigil run on EVERY request
-    # to ALL endpoints automatically
     dependencies=[Depends(rate_limit_vigil)],
 )
 
-# CORS configuration — allow React dashboard to call our API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",  # Vite dev server (React)
-        "http://localhost:3000",  # Alternative React port
-        "http://localhost:8000",  # Same-origin (Swagger UI)
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8000",
     ],
     allow_credentials=True,
-    allow_methods=["*"],     # Allow GET, POST, PUT, DELETE, etc.
-    allow_headers=["*"],     # Allow any HTTP headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+
+# ── Import and register all route modules ──
+from Vigil.api.analyze import router as analyze_router
+from Vigil.api.fingerprints import (
+    router as fingerprints_router,
+)
+from Vigil.api.attacks import router as attacks_router
+from Vigil.api.analytics import (
+    router as analytics_router,
+)
+from Vigil.api.feedback import router as feedback_router
+from Vigil.api.websocket import router as ws_router
+
+app.include_router(analyze_router)
+app.include_router(fingerprints_router)
+app.include_router(attacks_router)
+app.include_router(analytics_router)
+app.include_router(feedback_router)
+app.include_router(ws_router)
 
 
 @app.get("/health")
 async def health_check():
-    """
-    Simple health check endpoint.
-
-    Returns 200 if the server is running.
-    Used by:
-    - Docker healthcheck (is the container alive?)
-    - Monitoring tools (is the service up?)
-    - You, right now, to verify everything works
-    """
+    """Returns 200 if server is running."""
     return {"status": "healthy", "service": "Vigil"}
