@@ -1,28 +1,31 @@
 """
-WebSocket for real-time dashboard traffic feed.
+WebSocket for real-time dashboard live feed.
 
 HOW IT WORKS:
-1. Dashboard opens WebSocket connection to /ws/live-feed
+1. Browser opens WebSocket connection to /ws/live-feed
 2. Server subscribes to Redis Pub/Sub channel "vigil:live_feed"
 3. Background worker publishes events to that channel
-4. Server forwards events to dashboard in real-time
+4. Server receives events and forwards to browser
 
-WHY REDIS PUB/SUB:
-If you run 3 API instances, each has its own WebSocket
-connections. Redis Pub/Sub broadcasts to ALL instances,
-so every dashboard gets every event regardless of which
-API instance it's connected to.
+WHY get_message() INSTEAD OF listen():
+listen() is a blocking generator — it waits forever for the
+next message and never gives control back to FastAPI.
+Under load this causes timeouts and dropped connections.
 
-RECONNECTION:
-If the WebSocket disconnects (network blip, server restart),
-the dashboard's useLiveFeed hook automatically reconnects
-after 3 seconds (handled on the frontend side).
+get_message() checks once and returns immediately whether
+a message arrived or not. We loop manually with asyncio.sleep()
+between checks. This gives FastAPI time to handle other requests
+between each check, keeping the connection alive.
+
+The 0.05 second sleep means we check 20 times per second.
+Fast enough for real-time feel, gentle enough not to 
+overwhelm the server.
 """
 
 import asyncio
+import json
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-
 from Vigil.cache.client import get_redis
 from Vigil.config import logger
 
@@ -31,48 +34,54 @@ router = APIRouter()
 
 @router.websocket("/ws/live-feed")
 async def live_feed(websocket: WebSocket):
-    """
-    Real-time event feed for the dashboard.
-
-    Each connected dashboard gets a stream of JSON events:
-    {
-        "fingerprint": "a1b2c3d4...",
-        "ip": "1.2.3.4",
-        "method": "GET",
-        "path": "/api/users/5",
-        "threat_score": 0.87,
-        "action": "block",
-        "timestamp": 1705000001.5
-    }
-    """
+    """Real-time event stream for dashboard."""
     await websocket.accept()
+    logger.info("WebSocket client connected")
 
     redis = get_redis()
     pubsub = redis.pubsub()
-    await pubsub.subscribe("vigil:live_feed")
 
     try:
-        # Listen for messages from Redis Pub/Sub
-        # and forward them to the WebSocket client
+        await pubsub.subscribe("vigil:live_feed")
+        logger.info("Subscribed to vigil:live_feed")
+
         while True:
-            message = await pubsub.get_message(
-                ignore_subscribe_messages=True,
-                timeout=1.0,
-            )
-            if message and message["type"] == "message":
-                data = message["data"]
-                await websocket.send_text(data)
+            try:
+                # Check for a message — returns immediately
+                # whether a message arrived or not
+                message = await pubsub.get_message(
+                    ignore_subscribe_messages=True,
+                    timeout=0.0,
+                )
 
-            # Small sleep to prevent busy-waiting
-            # when there are no messages
-            await asyncio.sleep(0.1)
+                if message and message["type"] == "message":
+                    # Forward to browser
+                    await websocket.send_text(message["data"])
 
-    except WebSocketDisconnect:
-        logger.info("WebSocket client disconnected")
+                # Sleep 50ms then check again
+                # This prevents busy-waiting and keeps 
+                # FastAPI responsive
+                await asyncio.sleep(0.05)
+
+            except WebSocketDisconnect:
+                # Browser closed the tab or navigated away
+                logger.info("WebSocket client disconnected")
+                break
+            except Exception as e:
+                logger.warning(
+                    "WebSocket send error",
+                    extra={"error": str(e)},
+                )
+                break
+
     except Exception as e:
-        logger.warning(
-            "WebSocket error",
+        logger.error(
+            "WebSocket setup error",
             extra={"error": str(e)},
         )
     finally:
-        await pubsub.unsubscribe("vigil:live_feed")
+        try:
+            await pubsub.unsubscribe("vigil:live_feed")
+        except Exception:
+            pass
+        logger.info("WebSocket cleaned up")
