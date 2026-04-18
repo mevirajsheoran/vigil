@@ -30,3 +30,47 @@ dashboard/dist/
 docs/load_test_results/*.html
 
 githistory.txt
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Additional Python
+.venv/
+env/
+ENV/
+.python-version
+tox.ini
+tox/
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+*.egg
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Logs
+*.log
+logs/
+log/
+
+# Local development
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
