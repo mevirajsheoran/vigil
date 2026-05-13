@@ -47,12 +47,10 @@ async def rate_limit_vigil(request: Request) -> None:
             await r.expire(key, 60)  # expires in 60 seconds
 
 
-         # Raised to 10000 for load testing.
-        # In production with real clients coming from
-        # different IPs, the per-IP limit of 1000 is fine.
-        # But Locust sends ALL requests from 127.0.0.1,
-        # so they all share one counter.
-        if count > 10000:
+        # Production default: 1000 requests per IP per minute
+        # For load testing with Locust, increase to 10000
+        # (Locust sends all requests from 127.0.0.1)
+        if count > 1000:
             raise HTTPException(
                 status_code=429,
                 detail="Vigil API rate limit exceeded",

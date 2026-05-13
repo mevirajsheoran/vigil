@@ -15,9 +15,6 @@ SHUTDOWN SEQUENCE:
 The lifespan context manager ensures cleanup happens
 even if the server crashes. Without it, connections
 would leak and eventually exhaust the database.
-"""
-"""
-Main FastAPI application — the entry point.
 
 ALL routes registered here. When you add a new endpoint
 file, import its router and include it below.

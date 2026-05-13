@@ -29,6 +29,10 @@ dashboard/dist/
 # Load test HTML reports — generated, not source code
 docs/load_test_results/*.html
 
+# Internal documentation — not for public distribution
+documentation.md
+
+# Git history dump
 githistory.txt
 
 # IDEs
@@ -58,7 +62,6 @@ tox/
 coverage.xml
 *.cover
 .hypothesis/
-.pytest_cache/
 *.egg
 *.manifest
 *.spec

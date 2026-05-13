@@ -1,3 +1,8 @@
+# Vigil infrastructure — PostgreSQL + Redis for local development.
+# Usage: docker-compose up -d
+# This starts the database and cache services that Vigil depends on.
+# The Vigil API server itself runs separately via uvicorn.
+
 services:
 
   # ─── PostgreSQL Database ───
