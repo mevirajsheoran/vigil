@@ -30,7 +30,7 @@ dashboard/dist/
 docs/load_test_results/*.html
 
 # Internal documentation — not for public distribution
-documentation.md
+/documentation.md
 
 # Git history dump
 githistory.txt
